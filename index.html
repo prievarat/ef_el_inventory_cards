@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vibe Cards | Hidden Teacher Mode</title>
+    <title>Vibe Cards | Hidden Teacher Mode & Timer</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Nunito:wght@700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Nunito:wght@700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     
     <style>
@@ -15,6 +15,7 @@
             --primary-700: #B45309;
             --secondary-500: #2BB6B4;
             --secondary-700: #0F766E;
+            --accent-500: #E8467B;
             --bg: #FFF7F2;
             --surface: #FFFFFF;
             --border: #E6E9EF;
@@ -34,15 +35,47 @@
             overflow: hidden;
         }
 
+        /* --- Modern Header with Timer --- */
         header {
-            padding: 40px;
+            padding: 30px 60px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            max-width: 1300px;
+            max-width: 1400px;
             width: 100%;
             margin: 0 auto;
         }
+
+        .timer-box {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: var(--surface);
+            padding: 8px 20px;
+            border-radius: 9999px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            border: 1px solid var(--border);
+        }
+
+        #timer-display {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 24px;
+            font-weight: 500;
+            color: var(--accent-500);
+            min-width: 80px;
+        }
+
+        .timer-controls button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-muted);
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+        }
+
+        .timer-controls button:hover { color: var(--accent-500); }
 
         .mode-toggle {
             background: #E6E9EF;
@@ -69,6 +102,7 @@
             box-shadow: 0 4px 6px rgba(0,0,0,0.05);
         }
 
+        /* --- Stage --- */
         .stage {
             flex: 1;
             display: flex;
@@ -78,15 +112,15 @@
         }
 
         .card {
-            width: 850px;
-            height: 520px;
+            width: 900px;
+            height: 550px;
             background: var(--surface);
             border-radius: 32px;
-            box-shadow: 0 30px 60px rgba(180, 83, 9, 0.1);
+            box-shadow: 0 40px 80px rgba(180, 83, 9, 0.12);
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 60px;
+            padding: 80px;
             text-align: center;
             cursor: pointer;
             position: relative;
@@ -96,12 +130,13 @@
 
         .card h1 {
             font-family: 'Nunito', sans-serif;
-            font-size: 96px;
+            font-size: 110px;
             color: var(--primary-700);
             line-height: 1.1;
+            word-break: break-word;
         }
 
-        /* Nav & Badges */
+        /* Nav Controls */
         .nav-controls {
             padding-bottom: 60px;
             display: flex;
@@ -134,16 +169,14 @@
             border-radius: 9999px;
             font-weight: 700;
             font-size: 20px;
-            min-width: 100px;
+            min-width: 120px;
             text-align: center;
         }
 
         /* Animations */
         .exit-stack { transform: translateX(150%) rotate(25deg); opacity: 0; }
-        .pop-in { animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        @keyframes pop { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
-        /* Hidden Panel */
+        /* Hidden Teacher Console */
         #panel {
             position: fixed;
             top: 0;
@@ -151,7 +184,7 @@
             width: 420px;
             height: 100%;
             background: var(--surface);
-            box-shadow: -10px 0 50px rgba(0,0,0,0.1);
+            box-shadow: -10px 0 50px rgba(0,0,0,0.2);
             padding: 40px;
             transition: right 0.5s cubic-bezier(0.16, 1, 0.3, 1);
             z-index: 1000;
@@ -169,6 +202,7 @@
             font-family: inherit;
             font-size: 16px;
             resize: none;
+            background: var(--bg);
         }
 
         .save-btn {
@@ -184,22 +218,12 @@
         .overlay {
             position: fixed;
             inset: 0;
-            background: rgba(0,0,0,0.1);
-            backdrop-filter: blur(2px);
+            background: rgba(0,0,0,0.15);
+            backdrop-filter: blur(4px);
             display: none;
             z-index: 999;
         }
         .overlay.active { display: block; }
-
-        .hint {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 12px;
-            color: var(--text-muted);
-            opacity: 0.3;
-        }
     </style>
 </head>
 <body>
@@ -209,11 +233,20 @@
         <button id="btn-loop" class="mode-btn active" onclick="setMode('loop')">Carousel</button>
         <button id="btn-stack" class="mode-btn" onclick="setMode('stack')">Stack Mode</button>
     </div>
+
+    <div class="timer-box">
+        <div id="timer-display">00:00</div>
+        <div class="timer-controls">
+            <button id="timer-toggle" onclick="toggleTimer()"><i data-lucide="play" size="20"></i></button>
+            <button onclick="resetTimer()"><i data-lucide="rotate-ccw" size="20"></i></button>
+        </div>
+    </div>
+
     <div class="counter-badge" id="counter">1 / 7</div>
 </header>
 
 <div class="stage">
-    <div class="card pop-in" id="card" onclick="nextCard()">
+    <div class="card" id="card" onclick="nextCard()">
         <h1 id="card-text">come</h1>
     </div>
 </div>
@@ -231,11 +264,10 @@
     <h2 style="font-family: 'Nunito'; color: var(--secondary-700);">Teacher Console</h2>
     <p style="color: var(--text-muted); margin-top: 8px;">Update word list (comma separated):</p>
     <textarea id="word-input"></textarea>
-    <button class="save-btn" onclick="saveList()">Save Changes</button>
-    <p style="margin-top: 20px; font-size: 12px; color: var(--text-muted);">Shortcut: Shift + A to close</p>
+    <button class="save-btn" onclick="saveList()">Update & Save</button>
+    <div style="margin-top: 30px; padding: 15px; background: #f0fdfa; border-radius: 12px; font-size: 13px;">
+        <strong>Have fun!</strong>     </div>
 </div>
-
-<div class="hint">Secretly press Shift+A to edit</div>
 
 <script>
     lucide.createIcons();
@@ -245,21 +277,53 @@
     let currentIndex = 0;
     let mode = 'loop';
 
+    // State Elements
     const card = document.getElementById('card');
     const text = document.getElementById('card-text');
     const counter = document.getElementById('counter');
     const input = document.getElementById('word-input');
     const panel = document.getElementById('panel');
 
-    // Persistence
-    const saved = localStorage.getItem('vibe_cards_secret');
+    // Timer Logic
+    let timerInterval;
+    let seconds = 0;
+    let isTimerRunning = false;
+
+    function toggleTimer() {
+        const icon = document.getElementById('timer-toggle');
+        if (isTimerRunning) {
+            clearInterval(timerInterval);
+            icon.innerHTML = '<i data-lucide="play" size="20"></i>';
+        } else {
+            timerInterval = setInterval(() => {
+                seconds++;
+                const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
+                const secs = (seconds % 60).toString().padStart(2, '0');
+                document.getElementById('timer-display').innerText = `${mins}:${secs}`;
+            }, 1000);
+            icon.innerHTML = '<i data-lucide="pause" size="20"></i>';
+        }
+        isTimerRunning = !isTimerRunning;
+        lucide.createIcons();
+    }
+
+    function resetTimer() {
+        clearInterval(timerInterval);
+        seconds = 0;
+        isTimerRunning = false;
+        document.getElementById('timer-display').innerText = "00:00";
+        document.getElementById('timer-toggle').innerHTML = '<i data-lucide="play" size="20"></i>';
+        lucide.createIcons();
+    }
+
+    // Persistence & Secret Menu
+    const saved = localStorage.getItem('vibe_cards_v3');
     if(saved) {
         allWords = saved.split(',').map(s => s.trim());
         currentStack = [...allWords];
     }
     input.value = allWords.join(', ');
 
-    // KEYBOARD LISTENER (The Secret Sauce)
     document.addEventListener('keydown', (e) => {
         if (e.shiftKey && e.key.toLowerCase() === 'a') {
             e.preventDefault();
@@ -293,6 +357,7 @@
                 currentStack.shift();
                 card.classList.remove('exit-stack');
                 updateUI();
+                if (currentStack.length === 0 && isTimerRunning) toggleTimer(); // Stop timer when done
             }, 400);
         } else if (mode === 'loop') {
             currentIndex = (currentIndex + 1) % allWords.length;
@@ -322,6 +387,7 @@
     function resetAll() {
         currentStack = [...allWords];
         currentIndex = 0;
+        resetTimer();
         updateUI();
     }
 
@@ -333,7 +399,7 @@
 
     function saveList() {
         allWords = input.value.split(',').map(s => s.trim()).filter(s => s !== "");
-        localStorage.setItem('vibe_cards_secret', allWords.join(','));
+        localStorage.setItem('vibe_cards_v3', allWords.join(','));
         togglePanel();
         resetAll();
     }
