@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vibe Cards | Hidden Teacher Mode</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Nunito:wght@700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        :root {
+            --primary-500: #F4A329;
+            --primary-700: #B45309;
+            --secondary-500: #2BB6B4;
+            --secondary-700: #0F766E;
+            --bg: #FFF7F2;
+            --surface: #FFFFFF;
+            --border: #E6E9EF;
+            --text: #1F2937;
+            --text-muted: #6B7280;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        header {
+            padding: 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1300px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .mode-toggle {
+            background: #E6E9EF;
+            padding: 5px;
+            border-radius: 9999px;
+            display: flex;
+        }
+
+        .mode-btn {
+            padding: 10px 24px;
+            border-radius: 9999px;
+            border: none;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: transparent;
+            color: var(--text-muted);
+        }
+
+        .mode-btn.active {
+            background: var(--surface);
+            color: var(--primary-700);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .stage {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            perspective: 1200px;
+        }
+
+        .card {
+            width: 850px;
+            height: 520px;
+            background: var(--surface);
+            border-radius: 32px;
+            box-shadow: 0 30px 60px rgba(180, 83, 9, 0.1);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 60px;
+            text-align: center;
+            cursor: pointer;
+            position: relative;
+            transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.4s ease;
+            border: 1px solid var(--border);
+        }
+
+        .card h1 {
+            font-family: 'Nunito', sans-serif;
+            font-size: 96px;
+            color: var(--primary-700);
+            line-height: 1.1;
+        }
+
+        /* Nav & Badges */
+        .nav-controls {
+            padding-bottom: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .btn-vibe {
+            width: 64px;
+            height: 64px;
+            border-radius: 20px;
+            border: none;
+            background: var(--surface);
+            color: var(--primary-500);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-vibe:hover { transform: translateY(-3px); color: var(--primary-700); background: #fffdfb; }
+
+        .counter-badge {
+            background: var(--primary-700);
+            color: white;
+            padding: 10px 28px;
+            border-radius: 9999px;
+            font-weight: 700;
+            font-size: 20px;
+            min-width: 100px;
+            text-align: center;
+        }
+
+        /* Animations */
+        .exit-stack { transform: translateX(150%) rotate(25deg); opacity: 0; }
+        .pop-in { animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes pop { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+        /* Hidden Panel */
+        #panel {
+            position: fixed;
+            top: 0;
+            right: -450px;
+            width: 420px;
+            height: 100%;
+            background: var(--surface);
+            box-shadow: -10px 0 50px rgba(0,0,0,0.1);
+            padding: 40px;
+            transition: right 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+        }
+        #panel.open { right: 0; }
+        
+        textarea {
+            flex: 1;
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 16px;
+            border: 2px solid var(--border);
+            font-family: inherit;
+            font-size: 16px;
+            resize: none;
+        }
+
+        .save-btn {
+            background: var(--secondary-500);
+            color: white;
+            padding: 18px;
+            border: none;
+            border-radius: 16px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.1);
+            backdrop-filter: blur(2px);
+            display: none;
+            z-index: 999;
+        }
+        .overlay.active { display: block; }
+
+        .hint {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            color: var(--text-muted);
+            opacity: 0.3;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="mode-toggle">
+        <button id="btn-loop" class="mode-btn active" onclick="setMode('loop')">Carousel</button>
+        <button id="btn-stack" class="mode-btn" onclick="setMode('stack')">Stack Mode</button>
+    </div>
+    <div class="counter-badge" id="counter">1 / 7</div>
+</header>
+
+<div class="stage">
+    <div class="card pop-in" id="card" onclick="nextCard()">
+        <h1 id="card-text">come</h1>
+    </div>
+</div>
+
+<div class="nav-controls">
+    <button class="btn-vibe" onclick="prevCard()"><i data-lucide="arrow-left"></i></button>
+    <button class="btn-vibe" onclick="shuffleCards()" title="Shuffle"><i data-lucide="shuffle"></i></button>
+    <button class="btn-vibe" onclick="resetAll()" title="Restart"><i data-lucide="refresh-cw"></i></button>
+    <button class="btn-vibe" onclick="nextCard()"><i data-lucide="arrow-right"></i></button>
+</div>
+
+<div class="overlay" id="overlay" onclick="togglePanel()"></div>
+
+<div id="panel">
+    <h2 style="font-family: 'Nunito'; color: var(--secondary-700);">Teacher Console</h2>
+    <p style="color: var(--text-muted); margin-top: 8px;">Update word list (comma separated):</p>
+    <textarea id="word-input"></textarea>
+    <button class="save-btn" onclick="saveList()">Save Changes</button>
+    <p style="margin-top: 20px; font-size: 12px; color: var(--text-muted);">Shortcut: Shift + A to close</p>
+</div>
+
+<div class="hint">Secretly press Shift+A to edit</div>
+
+<script>
+    lucide.createIcons();
+
+    let allWords = ["come", "live", "bothers", "there is", "next to", "week", "breadwinner"];
+    let currentStack = [...allWords];
+    let currentIndex = 0;
+    let mode = 'loop';
+
+    const card = document.getElementById('card');
+    const text = document.getElementById('card-text');
+    const counter = document.getElementById('counter');
+    const input = document.getElementById('word-input');
+    const panel = document.getElementById('panel');
+
+    // Persistence
+    const saved = localStorage.getItem('vibe_cards_secret');
+    if(saved) {
+        allWords = saved.split(',').map(s => s.trim());
+        currentStack = [...allWords];
+    }
+    input.value = allWords.join(', ');
+
+    // KEYBOARD LISTENER (The Secret Sauce)
+    document.addEventListener('keydown', (e) => {
+        if (e.shiftKey && e.key.toLowerCase() === 'a') {
+            e.preventDefault();
+            togglePanel();
+        }
+    });
+
+    function updateUI() {
+        text.style.opacity = "0";
+        setTimeout(() => {
+            if (mode === 'stack') {
+                if (currentStack.length === 0) {
+                    text.innerText = "Deck Clear! 🌟";
+                    counter.innerText = "0";
+                } else {
+                    text.innerText = currentStack[0];
+                    counter.innerText = currentStack.length;
+                }
+            } else {
+                text.innerText = allWords[currentIndex];
+                counter.innerText = `${currentIndex + 1} / ${allWords.length}`;
+            }
+            text.style.opacity = "1";
+        }, 150);
+    }
+
+    function nextCard() {
+        if (mode === 'stack' && currentStack.length > 0) {
+            card.classList.add('exit-stack');
+            setTimeout(() => {
+                currentStack.shift();
+                card.classList.remove('exit-stack');
+                updateUI();
+            }, 400);
+        } else if (mode === 'loop') {
+            currentIndex = (currentIndex + 1) % allWords.length;
+            updateUI();
+        }
+    }
+
+    function prevCard() {
+        if (mode === 'loop') {
+            currentIndex = (currentIndex - 1 + allWords.length) % allWords.length;
+            updateUI();
+        }
+    }
+
+    function shuffleCards() {
+        allWords.sort(() => Math.random() - 0.5);
+        resetAll();
+    }
+
+    function setMode(m) {
+        mode = m;
+        document.getElementById('btn-loop').classList.toggle('active', mode === 'loop');
+        document.getElementById('btn-stack').classList.toggle('active', mode === 'stack');
+        resetAll();
+    }
+
+    function resetAll() {
+        currentStack = [...allWords];
+        currentIndex = 0;
+        updateUI();
+    }
+
+    function togglePanel() {
+        panel.classList.toggle('open');
+        document.getElementById('overlay').classList.toggle('active');
+        if(panel.classList.contains('open')) input.focus();
+    }
+
+    function saveList() {
+        allWords = input.value.split(',').map(s => s.trim()).filter(s => s !== "");
+        localStorage.setItem('vibe_cards_secret', allWords.join(','));
+        togglePanel();
+        resetAll();
+    }
+
+    updateUI();
+</script>
+
+</body>
+</html>
